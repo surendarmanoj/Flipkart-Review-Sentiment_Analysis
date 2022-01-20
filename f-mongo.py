@@ -4,6 +4,7 @@ from flask_pymongo import PyMongo
 import requests
 from bs4 import BeautifulSoup
 from pymongo import MongoClient
+from textblob import TextBlob
 
 app = Flask(__name__)
 
@@ -46,6 +47,28 @@ def home():
         else:
             product['review'] = review.text
 
+        review_sentiment = review.text.split(",")
+        sentiment_analysed = list()
+        for i in review_sentiment:
+            ins = dict()
+            s = TextBlob(i)
+            op = s.sentiment.polarity
+            if op<0:
+                sentiment = "Negative"
+            elif op == 0:
+                sentiment = "Neutral"
+            else:
+                sentiment = "Positive"
+            
+            ins['Review'] = i
+            ins['Sentiment'] = sentiment
+            sentiment_analysed.append(ins)
+
+        if sentiment_analysed is None:
+            pass
+        else:
+            product['Sentiment'] = sentiment_analysed
+
         products.append(product)
         
         
@@ -55,6 +78,9 @@ def home():
         db.records.insert_one(prod)
 
     return {'products':products}
+
+
+
 
 
 @app.route('/flipkart', methods=['GET'])
